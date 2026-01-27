@@ -1,0 +1,74 @@
+name: Keyrot CI
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
+
+jobs:
+  test:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint code
+        run: npm run lint
+
+      - name: Check TypeScript compilation
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm run test:run
+
+  build:
+    name: Build Package
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package
+        run: npm run build
+
+      - name: Create test package
+        run: npm pack
+
+      - name: Verify package exports
+        run: |
+          # Ensure package can be imported
+          mkdir -p test-import
+          cd test-import
+          echo '{ "type": "module" }' > package.json
+          echo 'import * as keyrot from "../dist/index.js"; console.log("Package import successful!", Object.keys(keyrot))' > test.js
+          node test.js
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: keyrot-package-node-${{ matrix.node-version }}
+          path: keyrot-*.tgz

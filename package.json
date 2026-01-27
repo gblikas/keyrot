@@ -1,0 +1,52 @@
+{
+  "name": "keyrot",
+  "version": "0.1.0",
+  "description": "API key rotation and multiplexing - manage multiple API keys as a unified pool with automatic rate limiting, quota tracking, and health monitoring",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:all": "npm run build && npm run build -w keyrot-example-nextjs",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint": "eslint app/",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "api",
+    "key",
+    "rotation",
+    "rate-limit",
+    "quota",
+    "pool",
+    "multiplexing",
+    "load-balancing"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^22.0.0",
+    "eslint": "^9.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.54.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

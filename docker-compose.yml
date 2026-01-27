@@ -1,0 +1,66 @@
+# Docker Compose configuration for keyrot with persistent storage
+#
+# This configuration demonstrates how to use keyrot with encrypted
+# persistent storage that survives container restarts.
+#
+# Usage:
+#   1. Set the KEYROT_ENCRYPTION_KEY environment variable
+#   2. Run: docker-compose up -d
+#
+# For production, consider:
+#   - Using Docker secrets for the encryption key
+#   - Using cloud-managed volumes (AWS EFS, Azure Files, etc.)
+#   - Adding health checks and resource limits
+
+version: '3.8'
+
+services:
+  # Example application using keyrot
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      # REQUIRED: Encryption key for data at rest
+      # Generate a strong key: openssl rand -base64 32
+      - KEYROT_ENCRYPTION_KEY=${KEYROT_ENCRYPTION_KEY:?KEYROT_ENCRYPTION_KEY is required}
+      
+      # Optional: Custom data directory (default: /data/keyrot)
+      - KEYROT_DATA_DIR=/data/keyrot
+      
+      # Optional: Node environment
+      - NODE_ENV=production
+    
+    volumes:
+      # Named volume for persistent, encrypted storage
+      - keyrot-data:/data/keyrot
+    
+    # Health check (if your app exposes a health endpoint)
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 10s
+    
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    
+    # Restart policy
+    restart: unless-stopped
+
+# Named volumes for data persistence
+volumes:
+  keyrot-data:
+    driver: local
+    # For cloud deployment, use a driver like:
+    # driver: azure_file (Azure)
+    # driver: efs (AWS)
+    # driver: nfs (self-hosted)
