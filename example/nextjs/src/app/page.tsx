@@ -142,14 +142,14 @@ export default function Home() {
             scanColor="#34d399"
             lineThickness={1}
             gridScale={0.12}
-            scanOpacity={0.5}
+            scanOpacity={(demoOpen || getStartedOpen) ? 0.25 : 0.5}
             scanGlow={0.6}
             scanSoftness={2.5}
-            scanDuration={3}
-            scanDelay={1}
+            scanDuration={(demoOpen || getStartedOpen) ? 12 : 3}
+            scanDelay={(demoOpen || getStartedOpen) ? 6 : 1}
             noiseIntensity={0.02}
             enablePost={true}
-            bloomIntensity={0.3}
+            bloomIntensity={(demoOpen || getStartedOpen) ? 0.15 : 0.3}
             chromaticAberration={0.001}
             className=""
             style={{ width: '100%', height: '100%' }}
@@ -157,10 +157,10 @@ export default function Home() {
         )}
       </div>
 
-      {/* Play/Pause Animation Button */}
+      {/* Play/Pause Animation Button - z-[60] to stay above popovers (z-50) */}
       <button
         onClick={() => setAnimationPlaying(!animationPlaying)}
-        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-40 w-10 h-10 rounded-full bg-emerald-950/80 backdrop-blur-md border border-emerald-500/30 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-emerald-900/90 hover:border-emerald-500/50 transition-all shadow-lg shadow-emerald-900/40"
+        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[60] w-10 h-10 rounded-full bg-emerald-950/80 backdrop-blur-md border border-emerald-500/30 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-emerald-900/90 hover:border-emerald-500/50 transition-all shadow-lg shadow-emerald-900/40"
         aria-label={animationPlaying ? 'Pause animation' : 'Play animation'}
         title={animationPlaying ? 'Pause animation' : 'Play animation'}
       >
