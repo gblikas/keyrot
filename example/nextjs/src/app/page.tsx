@@ -16,46 +16,18 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { GridScan } from '@/components/GridScan';
-
-interface HealthStatus {
-  status: 'healthy' | 'degraded' | 'critical' | 'exhausted';
-  availableKeys: number;
-  totalKeys: number;
-  effectiveRps: number;
-  effectiveQuotaRemaining: number;
-  effectiveQuotaTotal: number;
-  warnings: Array<{
-    keyId: string;
-    type: string;
-    message: string;
-  }>;
-}
-
-interface KeyStats {
-  id: string;
-  quotaUsed: number;
-  quotaRemaining: number;
-  isRateLimited: boolean;
-  isCircuitOpen: boolean;
-  isExhausted: boolean;
-  currentRps: number;
-  rpsLimit: number | null;
-  consecutiveFailures: number;
-}
-
-interface RequestResult {
-  id: string;
-  success: boolean;
-  keyUsed?: string;
-  duration?: number;
-  error?: string;
-  health?: HealthStatus;
-  timestamp: number;
-}
+import { useKeyPool, type RequestResult } from '@/lib/useKeyPool';
 
 export default function Home() {
-  const [health, setHealth] = useState<HealthStatus | null>(null);
-  const [keyStats, setKeyStats] = useState<KeyStats[]>([]);
+  const {
+    isReady,
+    health,
+    keyStats,
+    makeRequest,
+    burstRequests,
+    resetPool,
+  } = useKeyPool();
+
   const [results, setResults] = useState<RequestResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [simulate429, setSimulate429] = useState(false);
@@ -79,104 +51,29 @@ export default function Home() {
       });
   }, []);
 
-  const fetchHealth = useCallback(async () => {
-    try {
-      const res = await fetch('/api/health');
-      const data = await res.json();
-      setHealth(data.health);
-      setKeyStats(data.keyStats);
-    } catch (error) {
-      console.error('Failed to fetch health:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchHealth();
-    const interval = setInterval(fetchHealth, 1000);
-    return () => clearInterval(interval);
-  }, [fetchHealth]);
-
-  const makeRequest = async () => {
+  const handleMakeRequest = async () => {
     setLoading(true);
-    const requestId = `req-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
     try {
-      const params = new URLSearchParams();
-      if (simulate429) params.set('simulate429', 'true');
-      if (simulate500) params.set('simulate500', 'true');
-
-      const res = await fetch(`/api/request?${params}`);
-      const data = await res.json();
-
-      setResults(prev => [{
-        id: requestId,
-        success: data.success,
-        keyUsed: data.keyUsed,
-        duration: data.duration,
-        error: data.error,
-        health: data.health,
-        timestamp: Date.now(),
-      }, ...prev.slice(0, 19)]);
-    } catch (error) {
-      setResults(prev => [{
-        id: requestId,
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        health: undefined,
-        timestamp: Date.now(),
-      }, ...prev.slice(0, 19)]);
+      const result = await makeRequest({ simulate429, simulate500 });
+      setResults(prev => [result, ...prev.slice(0, 19)]);
     } finally {
       setLoading(false);
-      fetchHealth();
     }
   };
 
-  const burstRequests = async (count: number) => {
+  const handleBurstRequests = async (count: number) => {
     setLoading(true);
-    const baseTime = Date.now();
-
-    // Create promises that resolve with unique IDs
-    const promises = Array.from({ length: count }, (_, index) => {
-      const requestId = `burst-${baseTime}-${index}-${Math.random().toString(36).slice(2, 9)}`;
-      return fetch('/api/request')
-        .then(r => r.json())
-        .then(data => ({
-          id: requestId,
-          success: data.success as boolean,
-          keyUsed: data.keyUsed as string | undefined,
-          duration: data.duration as number | undefined,
-          error: data.error as string | undefined,
-          health: data.health as HealthStatus | undefined,
-          timestamp: Date.now(),
-        }))
-        .catch(e => ({
-          id: requestId,
-          success: false,
-          error: e instanceof Error ? e.message : 'Unknown error',
-          health: undefined as HealthStatus | undefined,
-          keyUsed: undefined as string | undefined,
-          duration: undefined as number | undefined,
-          timestamp: Date.now(),
-        }));
-    });
-
-    const burstResults = await Promise.all(promises);
-
-    // Sort results by timestamp (most recent first) to show them in order
-    burstResults.sort((a, b) => b.timestamp - a.timestamp);
-
-    setResults(prev => [
-      ...burstResults,
-      ...prev,
-    ].slice(0, 50)); // Keep more results for burst analysis
-
-    setLoading(false);
-    fetchHealth();
+    try {
+      const burstResults = await burstRequests(count);
+      setResults(prev => [...burstResults, ...prev].slice(0, 50));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const resetPool = async () => {
-    await fetch('/api/reset', { method: 'POST' });
+  const handleResetPool = () => {
+    resetPool();
     setResults([]);
-    fetchHealth();
   };
 
   const getStatusColor = (status: string) => {
@@ -509,31 +406,39 @@ const response = await pool.execute(async (keyValue) => {
                 Demo
               </h2>
               <p className="text-lg text-muted-foreground">
-                Interact with a live key pool. Make requests, simulate errors, and see keyrot in action.
+                Interact with a live key pool running entirely in your browser.
               </p>
             </div>
 
             {/* Status Bar */}
             <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/50 border border-emerald-500/20" title={`Pool Status: ${health?.status ?? 'loading'}`}>
-                <div className={`h-2.5 w-2.5 rounded-full ${getStatusDot(health?.status || 'unknown')}`} />
-                <span className={`uppercase font-medium tracking-wide ${getStatusColor(health?.status || 'unknown')}`}>
-                  {health?.status || '...'}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/50 border border-emerald-500/20">
-                <span className="text-muted-foreground">Keys:</span>
-                <span className="text-foreground tabular-nums font-medium">{health?.availableKeys ?? '-'}/{health?.totalKeys ?? '-'}</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/50 border border-emerald-500/20">
-                <span className="text-muted-foreground">RPS:</span>
-                <span className="text-foreground tabular-nums font-medium">{health?.effectiveRps ?? '-'}</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/50 border border-emerald-500/20">
-                <span className="text-muted-foreground">Quota:</span>
-                <span className="text-foreground tabular-nums font-medium">{health?.effectiveQuotaRemaining?.toLocaleString() ?? '-'}</span>
-                <Progress value={quotaPercent} className="h-1.5 w-16 bg-secondary" />
-              </div>
+              {!isReady ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/50 border border-emerald-500/20">
+                  <span className="text-muted-foreground">Initializing...</span>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/50 border border-emerald-500/20" title={`Pool Status: ${health?.status ?? 'loading'}`}>
+                    <div className={`h-2.5 w-2.5 rounded-full ${getStatusDot(health?.status || 'unknown')}`} />
+                    <span className={`uppercase font-medium tracking-wide ${getStatusColor(health?.status || 'unknown')}`}>
+                      {health?.status || '...'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/50 border border-emerald-500/20">
+                    <span className="text-muted-foreground">Keys:</span>
+                    <span className="text-foreground tabular-nums font-medium">{health?.availableKeys ?? '-'}/{health?.totalKeys ?? '-'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/50 border border-emerald-500/20">
+                    <span className="text-muted-foreground">RPS:</span>
+                    <span className="text-foreground tabular-nums font-medium">{health?.effectiveRps ?? '-'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/50 border border-emerald-500/20">
+                    <span className="text-muted-foreground">Quota:</span>
+                    <span className="text-foreground tabular-nums font-medium">{health?.effectiveQuotaRemaining?.toLocaleString() ?? '-'}</span>
+                    <Progress value={quotaPercent} className="h-1.5 w-16 bg-secondary" />
+                  </div>
+                </>
+              )}
             </div>
             {/* Main Content Grid */}
             <div className="grid gap-6 lg:grid-cols-3">
@@ -633,8 +538,8 @@ const response = await pool.execute(async (keyValue) => {
                   {/* Action Buttons */}
                   <div className="space-y-3">
                     <Button
-                      onClick={makeRequest}
-                      disabled={loading}
+                      onClick={handleMakeRequest}
+                      disabled={loading || !isReady}
                       className="w-full bg-emerald-500 hover:bg-emerald-600 text-emerald-950 font-medium"
                     >
                       {loading ? 'Sending...' : 'Make Request'}
@@ -642,16 +547,16 @@ const response = await pool.execute(async (keyValue) => {
 
                     <div className="grid grid-cols-2 gap-2">
                       <Button
-                        onClick={() => burstRequests(5)}
-                        disabled={loading}
+                        onClick={() => handleBurstRequests(5)}
+                        disabled={loading || !isReady}
                         variant="outline"
                         className="border-border/50 hover:bg-accent hover:border-border"
                       >
                         Burst 5
                       </Button>
                       <Button
-                        onClick={() => burstRequests(20)}
-                        disabled={loading}
+                        onClick={() => handleBurstRequests(20)}
+                        disabled={loading || !isReady}
                         variant="outline"
                         className="border-border/50 hover:bg-accent hover:border-border"
                       >
@@ -660,7 +565,7 @@ const response = await pool.execute(async (keyValue) => {
                     </div>
 
                     <Button
-                      onClick={resetPool}
+                      onClick={handleResetPool}
                       variant="ghost"
                       className="w-full text-muted-foreground hover:text-foreground"
                     >
@@ -868,6 +773,7 @@ const response = await pool.execute(async (keyValue) => {
             {/* Footer */}
             <div className="text-center text-xs text-muted-foreground pt-6 pb-8">
               <p>Built with keyrot - API key rotation and multiplexing</p>
+              <p className="mt-1 text-emerald-400/60">Demo runs entirely in your browser - no server required</p>
             </div>
           </div>
         </div>
