@@ -296,6 +296,8 @@ export const GridScan = ({
   enableGyro = false,
   scanOnClick = false,
   snapBackDelay = 250,
+  paused = false,
+  timeScale = 1.0,
   className,
   style
 }) => {
@@ -325,6 +327,20 @@ export const GridScan = ({
 
   const MAX_SCANS = 8;
   const scanStartsRef = useRef([]);
+
+  // Animation time control refs - these allow pause/timeScale changes without re-mounting
+  const elapsedTimeRef = useRef(0);
+  const pausedRef = useRef(paused);
+  const timeScaleRef = useRef(timeScale);
+
+  // Update refs when props change (no re-render of WebGL)
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
+
+  useEffect(() => {
+    timeScaleRef.current = timeScale;
+  }, [timeScale]);
 
   const pushScan = t => {
     const arr = scanStartsRef.current.slice();
@@ -510,11 +526,19 @@ export const GridScan = ({
     let last = performance.now();
     const tick = () => {
       const now = performance.now();
-      const dt = Math.max(0, Math.min(0.1, (now - last) / 1000));
+      const rawDt = Math.max(0, Math.min(0.1, (now - last) / 1000));
       last = now;
 
+      // Apply timeScale and pause to elapsed time
+      const isPaused = pausedRef.current;
+      const currentTimeScale = timeScaleRef.current;
+      const scaledDt = isPaused ? 0 : rawDt * currentTimeScale;
+      elapsedTimeRef.current += scaledDt;
+
+      // Always update camera smoothing (even when paused) for responsive feel
+      const smoothDt = rawDt; // Use raw dt for camera smoothing
       lookCurrent.current.copy(
-        smoothDampVec2(lookCurrent.current, lookTarget.current, lookVel.current, smoothTime, maxSpeed, dt)
+        smoothDampVec2(lookCurrent.current, lookTarget.current, lookVel.current, smoothTime, maxSpeed, smoothDt)
       );
 
       const tiltSm = smoothDampFloat(
@@ -523,7 +547,7 @@ export const GridScan = ({
         { v: tiltVel.current },
         smoothTime,
         maxSpeed,
-        dt
+        smoothDt
       );
       tiltCurrent.current = tiltSm.value;
       tiltVel.current = tiltSm.v;
@@ -534,7 +558,7 @@ export const GridScan = ({
         { v: yawVel.current },
         smoothTime,
         maxSpeed,
-        dt
+        smoothDt
       );
       yawCurrent.current = yawSm.value;
       yawVel.current = yawSm.v;
@@ -544,10 +568,11 @@ export const GridScan = ({
       material.uniforms.uTilt.value = tiltCurrent.current * tiltScale;
       material.uniforms.uYaw.value = THREE.MathUtils.clamp(yawCurrent.current * yawScale, -0.6, 0.6);
 
-      material.uniforms.iTime.value = now / 1000;
+      // Use elapsed time instead of raw time - respects pause and timeScale
+      material.uniforms.iTime.value = elapsedTimeRef.current;
       renderer.clear(true, true, true);
       if (composerRef.current) {
-        composerRef.current.render(dt);
+        composerRef.current.render(rawDt);
       } else {
         renderer.render(scene, camera);
       }

@@ -136,25 +136,25 @@ export default function Home() {
     <main className="min-h-screen relative overflow-hidden">
       {/* Persistent GridScan Background */}
       <div className="fixed inset-0 -z-10">
-        {animationPlaying && (
-          <GridScan
-            linesColor="#1a3a2a"
-            scanColor="#34d399"
-            lineThickness={1}
-            gridScale={0.12}
-            scanOpacity={(demoOpen || getStartedOpen) ? 0.25 : 0.5}
-            scanGlow={0.6}
-            scanSoftness={2.5}
-            scanDuration={(demoOpen || getStartedOpen) ? 12 : 3}
-            scanDelay={(demoOpen || getStartedOpen) ? 6 : 1}
-            noiseIntensity={0.02}
-            enablePost={true}
-            bloomIntensity={(demoOpen || getStartedOpen) ? 0.15 : 0.3}
-            chromaticAberration={0.001}
-            className=""
-            style={{ width: '100%', height: '100%' }}
-          />
-        )}
+        <GridScan
+          linesColor="#1a3a2a"
+          scanColor="#34d399"
+          lineThickness={1}
+          gridScale={0.12}
+          scanOpacity={0.5}
+          scanGlow={0.6}
+          scanSoftness={2.5}
+          scanDuration={3}
+          scanDelay={1}
+          noiseIntensity={0.02}
+          enablePost={true}
+          bloomIntensity={0.3}
+          chromaticAberration={0.001}
+          paused={!animationPlaying}
+          timeScale={(demoOpen || getStartedOpen) ? 0.15 : 1.0}
+          className=""
+          style={{ width: '100%', height: '100%' }}
+        />
       </div>
 
       {/* Play/Pause Animation Button - z-[60] to stay above popovers (z-50) */}
