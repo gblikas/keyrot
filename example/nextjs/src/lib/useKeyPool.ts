@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createKeyPool, type KeyPool, memoryAdapter, type StorageAdapter } from 'keyrot/client';
+import { createKeyPool, type KeyPool, memoryAdapter, type StorageAdapter } from '@gblikas/keyrot/client';
 
 /**
  * Simulated API keys for demonstration

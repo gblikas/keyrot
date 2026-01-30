@@ -265,7 +265,7 @@ The Next.js example depends on the core keyrot package via a local file referenc
 ```json
 {
   "dependencies": {
-    "keyrot": "file:../.."
+    "@gblikas/keyrot": "file:../.."
   }
 }
 ```

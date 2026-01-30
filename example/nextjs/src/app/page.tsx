@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { highlight } from 'sugar-high';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -278,7 +279,7 @@ export default function Home() {
                 Get Started
               </h2>
               <p className="text-sm sm:text-lg text-muted-foreground px-2">
-                Install keyrot and start managing your API keys in minutes.
+                Install @gblikas/keyrot and start managing your API keys in minutes.
               </p>
             </div>
 
@@ -286,15 +287,15 @@ export default function Home() {
             <div className="border-emerald-500/20 bg-emerald-950/60 backdrop-blur-md shadow-lg shadow-emerald-900/30 rounded-xl p-4 sm:p-6">
               <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider mb-2 sm:mb-3">Installation</h3>
               <pre className="bg-black/40 rounded-lg p-3 sm:p-4 overflow-x-auto">
-                <code className="text-emerald-300 text-xs sm:text-sm font-mono">npm install keyrot</code>
+                <code className="text-emerald-300 text-xs sm:text-sm font-mono">npm install @gblikas/keyrot</code>
               </pre>
             </div>
 
             {/* Basic Usage */}
             <div className="border-emerald-500/20 bg-emerald-950/60 backdrop-blur-md shadow-lg shadow-emerald-900/30 rounded-xl p-4 sm:p-6">
               <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider mb-2 sm:mb-3">Basic Usage</h3>
-              <pre className="bg-black/40 rounded-lg p-3 sm:p-4 overflow-x-auto text-[10px] sm:text-sm font-mono">
-                <code className="text-gray-300">{`import { createKeyPool } from 'keyrot';
+              <pre className="bg-black/40 rounded-lg p-3 sm:p-4 overflow-x-auto text-[10px] sm:text-sm font-mono [&_.sh-class]:text-amber-300 [&_.sh-identifier]:text-gray-200 [&_.sh-sign]:text-gray-400 [&_.sh-string]:text-emerald-300 [&_.sh-keyword]:text-purple-400 [&_.sh-comment]:text-gray-500 [&_.sh-jsxliterals]:text-gray-200 [&_.sh-property]:text-sky-300 [&_.sh-entity]:text-amber-400">
+                <code dangerouslySetInnerHTML={{ __html: highlight(`import { createKeyPool } from '@gblikas/keyrot';
 
 const pool = createKeyPool({
   keys: [
@@ -310,7 +311,7 @@ const response = await pool.execute(async (keyValue) => {
   return fetch('https://api.example.com/data', {
     headers: { Authorization: \`Bearer \${keyValue}\` },
   });
-});`}</code>
+});`) }} />
               </pre>
             </div>
 
@@ -838,7 +839,7 @@ const response = await pool.execute(async (keyValue) => {
 
             {/* Footer */}
             <div className="text-center text-[10px] sm:text-xs text-muted-foreground pt-4 sm:pt-6 pb-16 sm:pb-8">
-              <p>Built with keyrot - API key rotation and multiplexing</p>
+              <p>Built with @gblikas/keyrot - API key rotation and multiplexing</p>
               <p className="mt-1 text-emerald-400/60">Demo runs entirely in your browser - no server required</p>
             </div>
           </div>
