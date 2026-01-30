@@ -27,9 +27,11 @@ export {
 
 // Storage adapters
 export { memoryAdapter, MemoryStorageAdapter } from './storage/memory.js';
+export { fileAdapter, FileStorageAdapter } from './storage/file.js';
 export {
   dockerAdapter,
   DockerStorageAdapter,
 } from './storage/docker.js';
 export type { StorageAdapterOptions } from './storage/types.js';
+export type { FileStorageAdapterOptions } from './storage/file.js';
 export type { DockerStorageAdapterOptions } from './storage/docker.js';
