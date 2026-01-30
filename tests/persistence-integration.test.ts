@@ -306,6 +306,7 @@ describe('Persistence Integration', () => {
   describe('Full Lifecycle with FileStorageAdapter', () => {
     it('should persist and recover quota usage across pool restarts', async () => {
       const filePath = path.join(testDir, 'storage.json');
+      const storage = new FileStorageAdapter({ filePath });
       const keys: KeyConfig[] = [
         { id: 'file-key', value: 'sk-file', quota: { type: 'monthly', limit: 50 }, rps: 5 },
       ];
@@ -313,7 +314,7 @@ describe('Persistence Integration', () => {
       // First session: use 12 requests
       let pool: KeyPool<Response> = createKeyPool({
         keys,
-        storage: new FileStorageAdapter({ filePath }),
+        storage,
       });
 
       for (let i = 0; i < 12; i++) {
@@ -325,11 +326,13 @@ describe('Persistence Integration', () => {
 
       await pool.shutdown();
       await vi.runAllTimersAsync();
+      await storage.flush();
 
       // Second session: new adapter instance (simulates restart)
+      const recoveredStorage = new FileStorageAdapter({ filePath });
       const recoveredPool: KeyPool<Response> = createKeyPool({
         keys,
-        storage: new FileStorageAdapter({ filePath }),
+        storage: recoveredStorage,
       });
 
       // Trigger state loading by executing a request
@@ -342,6 +345,8 @@ describe('Persistence Integration', () => {
       );
 
       await recoveredPool.shutdown();
+      await vi.runAllTimersAsync();
+      await recoveredStorage.flush();
     });
   });
 

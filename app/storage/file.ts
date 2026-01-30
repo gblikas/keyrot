@@ -290,6 +290,14 @@ export class FileStorageAdapter implements StorageAdapter {
   }
 
   /**
+   * Wait for any pending writes to finish
+   */
+  async flush(): Promise<void> {
+    await this.ensureInitialized();
+    await this.writeChain;
+  }
+
+  /**
    * Get the configured file path
    */
   getFilePath(): string {
