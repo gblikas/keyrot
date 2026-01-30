@@ -136,31 +136,31 @@ export default function Home() {
     <main className="min-h-screen relative overflow-hidden">
       {/* Persistent GridScan Background */}
       <div className="fixed inset-0 -z-10">
-        {animationPlaying && (
-          <GridScan
-            linesColor="#1a3a2a"
-            scanColor="#34d399"
-            lineThickness={1}
-            gridScale={0.12}
-            scanOpacity={0.5}
-            scanGlow={0.6}
-            scanSoftness={2.5}
-            scanDuration={3}
-            scanDelay={1}
-            noiseIntensity={0.02}
-            enablePost={true}
-            bloomIntensity={0.3}
-            chromaticAberration={0.001}
-            className=""
-            style={{ width: '100%', height: '100%' }}
-          />
-        )}
+        <GridScan
+          linesColor="#1a3a2a"
+          scanColor="#34d399"
+          lineThickness={1}
+          gridScale={0.12}
+          scanOpacity={0.5}
+          scanGlow={0.6}
+          scanSoftness={2.5}
+          scanDuration={3}
+          scanDelay={1}
+          noiseIntensity={0.02}
+          enablePost={true}
+          bloomIntensity={0.3}
+          chromaticAberration={0.001}
+          paused={!animationPlaying}
+          timeScale={(demoOpen || getStartedOpen) ? 0.15 : 1.0}
+          className=""
+          style={{ width: '100%', height: '100%' }}
+        />
       </div>
 
-      {/* Play/Pause Animation Button */}
+      {/* Play/Pause Animation Button - z-[60] to stay above popovers (z-50) */}
       <button
         onClick={() => setAnimationPlaying(!animationPlaying)}
-        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-40 w-10 h-10 rounded-full bg-emerald-950/80 backdrop-blur-md border border-emerald-500/30 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-emerald-900/90 hover:border-emerald-500/50 transition-all shadow-lg shadow-emerald-900/40"
+        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[60] w-10 h-10 rounded-full bg-emerald-950/80 backdrop-blur-md border border-emerald-500/30 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-emerald-900/90 hover:border-emerald-500/50 transition-all shadow-lg shadow-emerald-900/40"
         aria-label={animationPlaying ? 'Pause animation' : 'Play animation'}
         title={animationPlaying ? 'Pause animation' : 'Play animation'}
       >
