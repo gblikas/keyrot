@@ -3,10 +3,12 @@ name: Publish public release
 on:
   release:
     types: [published]
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag name (e.g., v0.1.0)'
+        description: 'Tag name (e.g., v0.0.0)'
         required: true
         type: string
 
@@ -26,18 +28,20 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          run_install: false
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install
 
       - name: Build package
-        run: npm run build
-
-      - name: Run tests
-        run: npm run test:run
+        run: pnpm run build
 
       - name: Verify tag is set
         run: test -n "${TAG}" || { echo "TAG missing"; exit 1; }
@@ -47,16 +51,7 @@ jobs:
       - name: Verify tag matches package.json version
         env:
           TAG: ${{ github.event.release.tag_name || inputs.tag }}
-        run: |
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          TAG_VERSION="${TAG#v}"
-          if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
-            echo "Error: package.json version ($PACKAGE_VERSION) does not match tag ($TAG_VERSION)"
-            exit 1
-          fi
-          echo "Version matches tag: $PACKAGE_VERSION"
+        run: node -e 'const v=require("./package.json").version; const tag=(process.env.TAG||"").replace(/^v/,""); if(v!==tag){console.error("package.json version "+v+" does not match tag "+tag); process.exit(1)} else {console.log("Version matches tag:", v)}'
 
       - name: Publish package to npmjs with provenance
-        run: npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm publish --no-git-checks --access public --provenance
