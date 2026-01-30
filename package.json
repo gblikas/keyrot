@@ -1,5 +1,5 @@
 {
-  "name": "keyrot",
+  "name": "@gblikas/keyrot",
   "version": "0.1.0",
   "description": "API key rotation and multiplexing - manage multiple API keys as a unified pool with automatic rate limiting, quota tracking, and health monitoring",
   "type": "module",

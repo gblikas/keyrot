@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@gblikas/keyrot": "file:../..",
     "@radix-ui/react-progress": "^1.1.8",
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
@@ -17,12 +18,12 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "face-api.js": "^0.22.2",
-    "keyrot": "file:../..",
     "lucide-react": "^0.563.0",
     "next": "^16.1.5",
     "postprocessing": "^6.38.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "sugar-high": "^0.9.5",
     "tailwind-merge": "^3.4.0",
     "three": "^0.167.1"
   },
