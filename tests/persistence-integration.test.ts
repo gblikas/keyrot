@@ -14,6 +14,7 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import { createKeyPool } from '../app/pool.js';
 import { DockerStorageAdapter } from '../app/storage/docker.js';
+import { FileStorageAdapter } from '../app/storage/file.js';
 import { MemoryStorageAdapter } from '../app/storage/memory.js';
 import type { KeyPool } from '../app/pool.js';
 import type { KeyConfig } from '../app/types.js';
@@ -299,6 +300,53 @@ describe('Persistence Integration', () => {
       expect(finalPool.getKeyStats('key-1')?.quotaRemaining).toBe(200 - 76);
 
       await finalPool.shutdown();
+    });
+  });
+
+  describe('Full Lifecycle with FileStorageAdapter', () => {
+    it('should persist and recover quota usage across pool restarts', async () => {
+      const filePath = path.join(testDir, 'storage.json');
+      const storage = new FileStorageAdapter({ filePath });
+      const keys: KeyConfig[] = [
+        { id: 'file-key', value: 'sk-file', quota: { type: 'monthly', limit: 50 }, rps: 5 },
+      ];
+
+      // First session: use 12 requests
+      let pool: KeyPool<Response> = createKeyPool({
+        keys,
+        storage,
+      });
+
+      for (let i = 0; i < 12; i++) {
+        await executeWithTokenRefill(pool, keys);
+      }
+
+      const usedBefore = pool.getKeyStats('file-key')?.quotaUsed ?? 0;
+      expect(usedBefore).toBe(12);
+
+      await pool.shutdown();
+      await vi.runAllTimersAsync();
+      await storage.flush();
+
+      // Second session: new adapter instance (simulates restart)
+      const recoveredStorage = new FileStorageAdapter({ filePath });
+      const recoveredPool: KeyPool<Response> = createKeyPool({
+        keys,
+        storage: recoveredStorage,
+      });
+
+      // Trigger state loading by executing a request
+      await triggerStateLoad(recoveredPool, keys);
+
+      const usedAfter = recoveredPool.getKeyStats('file-key')?.quotaUsed ?? 0;
+      expect(usedAfter).toBe(usedBefore + 1);
+      expect(recoveredPool.getKeyStats('file-key')?.quotaRemaining).toBe(
+        50 - usedAfter
+      );
+
+      await recoveredPool.shutdown();
+      await vi.runAllTimersAsync();
+      await recoveredStorage.flush();
     });
   });
 
