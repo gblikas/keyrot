@@ -294,7 +294,7 @@ export default function Home() {
             {/* Basic Usage */}
             <div className="border-emerald-500/20 bg-emerald-950/60 backdrop-blur-md shadow-lg shadow-emerald-900/30 rounded-xl p-4 sm:p-6">
               <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider mb-2 sm:mb-3">Basic Usage</h3>
-              <pre className="bg-black/40 rounded-lg p-3 sm:p-4 overflow-x-auto text-[10px] sm:text-sm font-mono [&_.sh-class]:text-amber-300 [&_.sh-identifier]:text-gray-200 [&_.sh-sign]:text-gray-400 [&_.sh-string]:text-emerald-300 [&_.sh-keyword]:text-purple-400 [&_.sh-comment]:text-gray-500 [&_.sh-jsxliterals]:text-gray-200 [&_.sh-property]:text-sky-300 [&_.sh-entity]:text-amber-400">
+              <pre className="bg-black/40 rounded-lg p-3 sm:p-4 overflow-x-auto text-[10px] sm:text-sm font-mono">
                 <code dangerouslySetInnerHTML={{ __html: highlight(`import { createKeyPool } from '@gblikas/keyrot';
 
 const pool = createKeyPool({

@@ -116,6 +116,17 @@
   --sidebar-accent-foreground: oklch(0.95 0.01 260);
   --sidebar-border: oklch(0.25 0.01 260);
   --sidebar-ring: oklch(0.72 0.17 160);
+  
+  /* Sugar-high syntax highlighting */
+  --sh-class: #fcd34d;           /* amber-300 - numbers, classes */
+  --sh-identifier: #e5e7eb;      /* gray-200 - identifiers */
+  --sh-sign: #9ca3af;            /* gray-400 - operators, punctuation */
+  --sh-string: #6ee7b7;          /* emerald-300 - strings */
+  --sh-keyword: #c084fc;         /* purple-400 - keywords */
+  --sh-comment: #6b7280;         /* gray-500 - comments */
+  --sh-jsxliterals: #e5e7eb;     /* gray-200 - JSX literals */
+  --sh-property: #7dd3fc;        /* sky-300 - properties */
+  --sh-entity: #fbbf24;          /* amber-400 - entities */
 }
 
 /* Force dark mode */
